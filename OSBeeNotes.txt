@@ -1,0 +1,47 @@
+OSBee
+
+Pins required:
+PortA: D3 (set), D4 (rst) (prcaution: never set both high at same time)
+D9 boos converter pwm pin
+A0: boost converter feedback pin
+A1 battery voltage feedback pin
+5V (source voltage select vin not ext)
+
+(Positive red wire to set)
+
+pinoccio only d2,3,4,5 can be made pwm
+d2-d8 gpio
+A0-A7 analogue
+
+
+split order
+protoboard square
+pcb02a 8-pin
+12mm domed push button pack
+temp6000
+h-bridge 1a
+dc-dc boost converter
+
+function colours
+{
+    led.green;
+    scout.delay(1000, "led.yellow");
+    scout.delay(2000, "led.red(1000)");
+}
+
+function randomblink 
+{
+    r = random(255);
+    g = random(255);
+    b = random(255);
+    if(led.isoff)
+    {
+        command.others("led.off");
+        led.setrgb(r,g,b);
+    }
+    else
+    {
+        command.others("led.setrgb",r,g,b);
+        led.off;
+    }
+}
