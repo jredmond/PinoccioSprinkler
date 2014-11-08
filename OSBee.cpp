@@ -8,8 +8,8 @@
    info@rayshobby.net
    
 */
-#include <wiring_private.h>
-#include <Serial.h>
+//#include <Serial.h>
+#include "Arduino.h"
 #include "OSBee.h"
 
 // Constructor function
@@ -22,10 +22,6 @@ OSBee::OSBee() {
 
 // Must call this function first
 void OSBee::begin() {
-  
-#ifdef SERIAL_DEBUG
-  Serial.begin(9600);
-#endif
 
   // !!!!!! IMPORTANT !!!!!!
   // Must set ADC to use internal reference
@@ -35,7 +31,6 @@ void OSBee::begin() {
   setPulseLength(DEFAULT_PULSE_LENGTH);
   setDutyCycle(DEFAULT_BOOST_DUTY);
 
-
   // !!!!!! IMPORTANT !!!!!!
   // Set pins in output mode, and clear all pins
   pinMode(pinSET_A, OUTPUT);
@@ -43,41 +38,17 @@ void OSBee::begin() {
   
   pinMode(pinRST_A, OUTPUT);
   digitalWrite(pinRST_A, LOW);
-  
-  pinMode(pinSET_B, OUTPUT);
-  digitalWrite(pinSET_B, LOW);
-  
-  pinMode(pinRST_B, OUTPUT);
-  digitalWrite(pinRST_B, LOW);
-
-  pinMode(pinSET_C, OUTPUT);
-  digitalWrite(pinSET_C, LOW);
-  
-  pinMode(pinRST_C, OUTPUT);
-  digitalWrite(pinRST_C, LOW);
-
-  pinMode(pinSET_D, OUTPUT);
-  digitalWrite(pinSET_D, LOW);
-  
-  pinMode(pinRST_D, OUTPUT);
-  digitalWrite(pinRST_D, LOW);
       
-  // The following sets 62.5Khz PWM for pin 9 (timer 1)
+  // Set timer 3 to fast pwm mode corresponding to pin D3 (pinBOOST)
   // The ideal frequency depends on the inductor, but it'll only be important if you need alot more power.
   // set prescaler to 1
-  // (sbi means "set bit register", cbi means "clear bit register")
-  cbi(TCCR1B, CS12);
-  cbi(TCCR1B, CS11);
-  sbi(TCCR1B, CS10);
-  
-  // set fast PWM
-  cbi(TCCR1B, WGM13);
-  sbi(TCCR1B, WGM12);
+  TCCR3B = _BV(CS00);
+  TCCR3A = _BV(COM0A1) | _BV(COM0B1) | _BV(WGM01) | _BV(WGM00);
         
   initialized = true;
   
   // close all valves
-  closeAll();
+  closeA();
   
 #ifdef SERIAL_DEBUG
   Serial.println("Initialized.");
@@ -107,6 +78,9 @@ void OSBee::boost() {
   unsigned long t = millis();
   while (measure < voltage_level) {
     measure = analogRead(pinBOOST_FB);
+    #ifdef SERIAL_DEBUG
+      Serial.println(String(measure));
+    #endif
     // set a time limit : 30 seconds
     if (millis() > t + 30000)  break;
   }
@@ -143,25 +117,10 @@ void OSBee::setDutyCycle(int c) {
     duty_cycle = c;
 }
 
-// Close all valves
-void OSBee::closeAll() {
-  close(0);
-  close(1);
-  close(2);
-  close(3);
-}
-
-static byte osbee_pins[] = {pinSET_A, pinRST_A,
-                            pinSET_B, pinRST_B,
-                            pinSET_C, pinRST_C,
-                            pinSET_D, pinRST_D};
-  
-// Close valve i (i = 0, 1, 2, 3, corresponding to ports A, B, C, D)
-void OSBee::close(int i) {
-  if(i<0 || i>3)  return;
-
-  int set_pin = osbee_pins[i*2+0];
-  int rst_pin = osbee_pins[i*2+1];
+// Close valve A
+void OSBee::closeA() {
+  int set_pin = pinSET_A;
+  int rst_pin = pinRST_A;
   
   digitalWrite(set_pin, LOW);
   digitalWrite(rst_pin, LOW);
@@ -173,25 +132,14 @@ void OSBee::close(int i) {
   digitalWrite(rst_pin, LOW);
   
 #ifdef SERIAL_DEBUG
-  Serial.print("Valve ");
-  Serial.print(i);
-  Serial.println(" closed.");
+  Serial.println("Valve A closed");
 #endif  
 }
 
-// Close valve p (p = 'A', 'B', 'C', 'D'; or 'a', 'b', 'c', 'd')
-void OSBee::close(char p) {
-  if (p>='A' && p<='D')
-    close((int)(p - 'A'));
-  else if (p>='a' && p<='d')
-    close((int)(p - 'a'));
-}
-
-// Open valve i (i = 0, 1, 2, 3, corresponding to ports A, B, C, D)
-void OSBee::open(int i) {
-  if(i<0 || i>3)  return;
-  int set_pin = osbee_pins[i*2+0];
-  int rst_pin = osbee_pins[i*2+1];
+// Open valve A
+void OSBee::openA() {
+  int set_pin = pinSET_A;
+  int rst_pin = pinRST_A;
   
   digitalWrite(set_pin, LOW);
   digitalWrite(rst_pin, LOW);
@@ -203,18 +151,8 @@ void OSBee::open(int i) {
   digitalWrite(set_pin, LOW);
   
 #ifdef SERIAL_DEBUG
-  Serial.print("Valve ");
-  Serial.print(i);
-  Serial.println(" opened.");
+  Serial.println("Valve A opened.");
 #endif  
-}
-
-// Open valve p (p = 'A', 'B, 'C', 'D'; or 'a', 'b', 'c', 'd')
-void OSBee::open(char p) {
-  if (p>='A' && p<='D')
-    open((int)(p - 'A'));
-  else if (p>='a' && p<='d')
-    open((int)(p = 'a'));
 }
 
 // get battery voltage
