@@ -27,6 +27,8 @@ void setup() {
   addBitlashFunction("sprinkler.open", (bitlash_function)sprinklerOpen);
   addBitlashFunction("sprinkler.close", (bitlash_function)sprinklerClose);
   addBitlashFunction("custom.wifi", (bitlash_function)customWifi);
+  Serial.println("External Aref:");
+  Serial.println(String(Scout.getExternalAref()));
 }
 
 void loop() {

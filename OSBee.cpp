@@ -25,7 +25,7 @@ void OSBee::begin() {
 
   // !!!!!! IMPORTANT !!!!!!
   // Must set ADC to use internal reference
-  analogReference(INTERNAL); 
+  //analogReference(INTERNAL); 
     
   setVoltage(DEFAULT_BOOST_VOLTAGE);
   setPulseLength(DEFAULT_PULSE_LENGTH);
@@ -61,7 +61,7 @@ void OSBee::boost() {
   
   // !!!!!! IMPORTANT !!!!!!
   // Must set ADC to use internal reference
-  analogReference(INTERNAL);  
+  //analogReference(INTERNAL);  
 
 #ifdef SERIAL_DEBUG
   Serial.print("Boosting...");
@@ -99,7 +99,11 @@ void OSBee::setVoltage(float v) {
   // So the analog reading should be:
   // voltage * 47 / (1000 + 47) / 1.1 * 1024
   // where 1.1 is ATmega328's internal voltage reference
-  voltage_level = (int)(v*41.8);
+  //voltage_level = (int)(v*41.8);  
+  // Pinoccio: (1.6 internal voltage ref)
+  // voltage * 47 / (1000 + 47) / 1.6 * 1024
+  voltage_level = (int)(v*28.7);  
+
 
 #ifdef SERIAL_DEBUG
   Serial.print("Voltage level: ");
@@ -159,11 +163,13 @@ void OSBee::openA() {
 float OSBee::getBattVoltage() {
   // !!!!!! IMPORTANT !!!!!!
   // Must set ADC to use internal reference
-  analogReference(INTERNAL); 
+  //analogReference(INTERNAL); 
   
   // On OSBee, the battery feedback divider is 470K top, 100K bottom.
   // analog reading = voltage * 100 / (100 + 470) / 1.1 * 1024
   // where 1.1 is ATmega328's internal voltage reference
+  //return analogRead(pinBATT_FB) * 0.00612;
+  //Pinoccio: voltage * 100 / (100 + 470) / 1.6 * 1024
   return analogRead(pinBATT_FB) * 0.00612;
 }
 
